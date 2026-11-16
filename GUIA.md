@@ -12,7 +12,7 @@ Los ingresantes no conocen el campus: no saben dónde está su facultad, el come
 - Pines de servicios: Comedor, Cafetín 1, Cafetería saludable, Piscina, Campo deportivo, Losas deportivas, Centro Médico, Auditorio de Videoconferencias, Monumento Carlos Vidaurre, Puerta 1 y Puerta 2.
 - Una ficha con información al tocar cada lugar.
 - Un **recorrido guiado** de 20 pasos, desde la Puerta 1 hasta la Puerta 2.
-- **📍 ¿Cómo llego?**: eliges tu facultad o un lugar y, desde la Puerta 1 o la Puerta 2, aparece una **ruta azul** por las pistas del campus con un **personaje caminando** hasta el destino. También se puede pedir desde la ficha de cada lugar (botón "Cómo llegar").
+- **📍 ¿Cómo llego?**: eliges tu facultad o un lugar y, desde la Puerta 1 o la Puerta 2, aparece una **ruta azul** por las pistas del campus con un **personaje caminando** hasta el destino. También se puede pedir desde la ficha de cada lugar (botón "Cómo llegar"). Debajo aparece la ruta **paso a paso**: *Sales desde…*, *Pasas por…* y *¡Llegaste a tu destino!*, con la foto de cada lugar, y se marca el paso donde va el personaje.
 - **📷 Fotos reales** en la ficha de cada lugar (si se suben al repositorio).
 - Un botón **❄️ Congelar** para tocar todo tranquilo sin mover el celular.
 
@@ -75,6 +75,6 @@ Las fotos de FEH y FMH son de Manuel Rojas en Google Maps y llevan su crédito e
 2. "Hicimos un folleto de bienvenida con realidad aumentada, que funciona desde el navegador, sin instalar apps."
 3. *(Escanear)* "Al apuntar con el celular, los edificios salen en 3D sobre el mapa."
 4. *(Tocar un bloque)* "Si toco un edificio, veo qué facultad es y qué escuelas tiene."
-5. *(¿Cómo llego?)* "Si soy ingresante de Sistemas, elijo FISI y me muestra el camino desde la puerta, con un personaje que camina hasta allí."
+5. *(¿Cómo llego?)* "Si soy ingresante de Economía, elijo FCE y me muestra el camino desde la puerta: salgo por la Puerta 1, paso por el Monumento, el Cafetín y FICA, y llego a mi facultad. Cada paso tiene su foto."
 6. *(Recorrido)* "Y con el recorrido guiado, el ingresante conoce todo el campus paso a paso."
 7. "Usamos herramientas gratuitas: MindAR y A-Frame, como alternativa a Adobe Aero, que fue descontinuado."

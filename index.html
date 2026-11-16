@@ -51,12 +51,21 @@
     #destinos button span { display: inline-block; width: 22px; height: 22px; border-radius: 50%; color: #fff; text-align: center; line-height: 22px; margin-right: 6px; font-size: 12px; }
     #btnCerrarRutas { width: 100%; margin-top: 10px; padding: 11px; border: 0; border-radius: 12px; background: #eee; font-weight: 700; font-size: 15px; }
     /* Aviso de ruta activa */
-    #rutaInfo { position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 29; background: #14401f; color: #fff; border-radius: 18px; padding: 12px 14px;
-                display: flex; align-items: center; gap: 10px; transform: translateY(150%); transition: transform .35s ease; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+    #rutaInfo { position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 29; background: #fff; border-radius: 20px; overflow: hidden;
+                transform: translateY(150%); transition: transform .35s ease; box-shadow: 0 8px 24px rgba(0,0,0,.4); display: flex; flex-direction: column; max-height: 46vh; }
     #rutaInfo.visible { transform: translateY(0); }
-    #rutaTexto { flex: 1; font-size: 14.5px; line-height: 1.35; }
+    #rutaCab { background: #14401f; color: #fff; padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
+    #rutaTexto { flex: 1; font-size: 14px; line-height: 1.3; }
     #rutaTexto b { color: #f4b400; }
-    #rutaInfo button { border: 0; border-radius: 10px; padding: 9px 11px; font-weight: 700; font-size: 14px; }
+    #rutaCab button { border: 0; border-radius: 10px; padding: 8px 10px; font-weight: 700; font-size: 13px; }
+    #rutaPasos { list-style: none; margin: 0; padding: 6px 10px 10px; overflow-y: auto; }
+    #rutaPasos li { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 12px; transition: background .3s; position: relative; }
+    #rutaPasos li + li::before { content: ''; position: absolute; left: 35px; top: -10px; height: 12px; border-left: 3px dotted #0057ff; }
+    #rutaPasos li.activo { background: #e3edff; box-shadow: inset 0 0 0 2px #0057ff; }
+    #rutaPasos .mini { width: 54px; height: 40px; border-radius: 8px; object-fit: cover; flex: none; background: #eef5ee; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    #rutaPasos .txt { font-size: 14px; line-height: 1.3; color: #222; }
+    #rutaPasos .txt small { display: block; color: #0057ff; font-weight: 700; font-size: 11.5px; letter-spacing: .3px; }
+    #rutaPasos li.final .txt small { color: #2e8c3e; }
     .flotante.activo { background: #f4b400; color: #14401f; }
 
     /* Ficha de información */
@@ -246,9 +255,12 @@
     <button id="btnCerrarRutas">Cerrar</button>
   </div>
   <div id="rutaInfo">
-    <div id="rutaTexto"></div>
-    <button id="btnOtraRuta" style="background:#f4b400;color:#14401f">Otro destino</button>
-    <button id="btnQuitarRuta" style="background:#fff;color:#14401f">✕</button>
+    <div id="rutaCab">
+      <div id="rutaTexto"></div>
+      <button id="btnOtraRuta" style="background:#f4b400;color:#14401f">Otro destino</button>
+      <button id="btnQuitarRuta" style="background:#fff;color:#14401f">✕</button>
+    </div>
+    <ol id="rutaPasos"></ol>
   </div>
 
   <a-scene
@@ -461,6 +473,49 @@
       document.querySelector('#lugar-' + destino).emit('saltar', null, false);
       // animación: la línea se dibuja y luego el personaje la recorre una y otra vez
       const total = tubo.geometry.index.count, t0 = performance.now(), DIBUJO = 1600, VEL = 0.09;
+
+      /* --- Pasos: lugares por los que pasa la ruta, en orden --- */
+      const MUESTRAS = 240, muestras = [];
+      for (let i = 0; i <= MUESTRAS; i++) muestras.push(curva.getPointAt(i / MUESTRAS));
+      const distPoligono = (p, pts) => {          // distancia de un punto al borde de un polígono (0 si está dentro)
+        let dentro = false, md = Infinity;
+        for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+          const [xi, yi] = pts[i], [xj, yj] = pts[j];
+          if ((yi > p.y) !== (yj > p.y) && p.x < (xj - xi) * (p.y - yi) / (yj - yi) + xi) dentro = !dentro;
+          const dx = xj - xi, dy = yj - yi, L2 = dx * dx + dy * dy || 1e-9;
+          const tt = Math.max(0, Math.min(1, ((p.x - xi) * dx + (p.y - yi) * dy) / L2));
+          md = Math.min(md, Math.hypot(p.x - (xi + tt * dx), p.y - (yi + tt * dy)));
+        }
+        return dentro ? 0 : md;
+      };
+      const pasos = [];
+      LUGARES.forEach(L => {
+        if (L.id === origen || L.id === destino) return;
+        let md = Infinity, mi = 0;
+        muestras.forEach((p, i) => {
+          const d = L.tipo === 'bloque' ? distPoligono(p, L.pts) : Math.hypot(p.x - L.c[0], p.y - L.c[1]);
+          if (d < md) { md = d; mi = i; }
+        });
+        if (md < (L.tipo === 'bloque' ? 0.022 : 0.03)) pasos.push({ id: L.id, u: mi / MUESTRAS });
+      });
+      pasos.sort((a, b) => a.u - b.u);
+      const nombreLargo = id => { const L = LUGARES.find(l => l.id === id);
+        return L.tipo === 'bloque' ? `Bloque ${id} · ${L.sig} <span style="color:#666">(${INFO[id].sub.replace('Facultad de ', '')})</span>` : INFO[id].titulo.replace(/^\S+\s/, ''); };
+      const icono = id => { const L = LUGARES.find(l => l.id === id); return L.tipo === 'bloque' ? '🏫' : (ICONOS[id] || '📍'); };
+      const filas = [{ id: origen, u: 0, et: '🟢 SALES DESDE', clase: '' }, ...pasos.map(p => ({ ...p, et: '📍 PASAS POR', clase: '' })),
+                     { id: destino, u: 1, et: '🏁 ¡LLEGASTE A TU DESTINO!', clase: 'final' }];
+      document.querySelector('#rutaPasos').innerHTML = filas.map((f, i) => `
+        <li class="${f.clase}" data-i="${i}">
+          <img class="mini" src="foto-${f.id.toLowerCase()}.jpg" alt="" onerror="this.outerHTML='<div class=&quot;mini&quot;>${icono(f.id)}</div>'">
+          <div class="txt"><small>${i === 0 ? f.et : (f.clase ? f.et : `${f.et} · paso ${i}`)}</small>${nombreLargo(f.id)}</div>
+        </li>`).join('');
+      let pasoActivo = -1;
+      const marcarPaso = (i) => {
+        if (i === pasoActivo) return; pasoActivo = i;
+        document.querySelectorAll('#rutaPasos li').forEach((li, k) => li.classList.toggle('activo', k === i));
+        const li = document.querySelector(`#rutaPasos li[data-i="${i}"]`); if (li) li.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        const el = document.querySelector('#lugar-' + filas[i].id); if (el && i > 0) el.emit('saltar', null, false);
+      };
       const fin = new THREE.Vector3(), sig = new THREE.Vector3();
       const paso = (ahora) => {
         const tt = ahora - t0;
@@ -468,7 +523,11 @@
         tubo.geometry.setDrawRange(0, n); brillo.geometry.setDrawRange(0, n);
         if (k >= 1) {
           persona.visible = true;
-          const u = ((tt - DIBUJO) / 1000 * VEL / largo) % 1;
+          // camina hasta el destino, espera 2 s ahí y vuelve a empezar
+          const viaje = largo / VEL * 1000, ciclo = viaje + 2000, tc = (tt - DIBUJO) % ciclo;
+          const u = Math.min(tc / viaje, 1);
+          let act = 0; filas.forEach((f, i) => { if (u >= f.u - 0.015) act = i; }); if (u >= 1) act = filas.length - 1;
+          marcarPaso(act);
           curva.getPointAt(u, fin); curva.getPointAt(Math.min(u + 0.01, 1), sig);
           persona.position.copy(fin).setZ(0.012 + Math.abs(Math.sin(tt / 120)) * 0.003);
           persona.rotation.z = Math.atan2(sig.y - fin.y, sig.x - fin.x) - Math.PI / 2;
@@ -478,7 +537,7 @@
       };
       animRuta = requestAnimationFrame(paso);
       const nombre = l => l.tipo === 'bloque' ? `Bloque ${l.id} · ${l.sig}` : INFO[l.id].titulo.replace(/^\S+\s/, '');
-      document.querySelector('#rutaTexto').innerHTML = `🚶 Desde <b>${nombre(Lo)}</b><br>hasta <b>${nombre(Ld)}</b>`;
+      document.querySelector('#rutaTexto').innerHTML = `🚶 <b>${nombre(Lo)}</b> → <b>${nombre(Ld)}</b><br><span style="opacity:.85">${filas.length - 2 > 0 ? 'Pasarás por ' + (filas.length - 2) + ' lugar' + (filas.length - 2 > 1 ? 'es' : '') : 'Camino directo'}</span>`;
       rutaInfo.classList.add('visible');
     }
 
