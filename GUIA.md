@@ -12,6 +12,8 @@ Los ingresantes no conocen el campus: no saben dónde está su facultad, el come
 - Pines de servicios: Comedor, Cafetín 1, Cafetería saludable, Piscina, Campo deportivo, Losas deportivas, Centro Médico, Auditorio de Videoconferencias, Monumento Carlos Vidaurre, Puerta 1 y Puerta 2.
 - Una ficha con información al tocar cada lugar.
 - Un **recorrido guiado** de 20 pasos, desde la Puerta 1 hasta la Puerta 2.
+- **📍 ¿Cómo llego?**: eliges tu facultad o un lugar y, desde la Puerta 1 o la Puerta 2, aparece una **ruta azul** por las pistas del campus con un **personaje caminando** hasta el destino. También se puede pedir desde la ficha de cada lugar (botón "Cómo llegar").
+- **📷 Fotos reales** en la ficha de cada lugar (si se suben al repositorio).
 - Un botón **❄️ Congelar** para tocar todo tranquilo sin mover el celular.
 
 ## 4. Herramientas (todas gratuitas, en lugar de Adobe Aero, que fue descontinuado)
@@ -34,22 +36,45 @@ Los ingresantes no conocen el campus: no saben dónde está su facultad, el come
 - Facultades y escuelas: información pública de la UNSM.
 - Los horarios se pueden agregar en `index.html` (sección DATOS, campo `horario`).
 
-## 7. Cómo publicarlo
+## 7. Cómo agregar fotos reales
+Sube al repositorio una foto por lugar con **este nombre exacto** (en minúsculas, formato .jpg). La ficha la mostrará sola:
+
+| Lugar | Nombre del archivo |
+|---|---|
+| Bloque A (FISI) … Bloque I (FDCP) | `foto-a.jpg`, `foto-b.jpg`, `foto-c.jpg`, `foto-d.jpg`, `foto-e.jpg`, `foto-f.jpg`, `foto-g.jpg`, `foto-h.jpg`, `foto-i.jpg` |
+| Comedor | `foto-comedor.jpg` |
+| Cafetín 1 | `foto-cafetin.jpg` |
+| Cafetería saludable | `foto-cafeteria.jpg` |
+| Centro Médico | `foto-medico.jpg` |
+| Auditorio | `foto-auditorio.jpg` |
+| Piscina | `foto-piscina.jpg` |
+| Losas deportivas | `foto-losas.jpg` |
+| Campo deportivo | `foto-campo.jpg` |
+| Monumento | `foto-monumento.jpg` |
+| Puerta 1 / Puerta 2 | `foto-puerta1.jpg`, `foto-puerta2.jpg` |
+
+Usa fotos tomadas por ti, en horizontal y livianas (menos de 300 KB cada una) para que carguen rápido con datos móviles.
+
+**Fotos incluidas ahora:** Puerta 1, Puerta 2, FEH (D), FMH (B), FDCP (I), Comedor, Centro Médico, Monumento y FCE (H).
+Las fotos de FEH y FMH son de Manuel Rojas en Google Maps y llevan su crédito en la ficha (campo `credito` en `index.html`). Lo ideal es reemplazarlas por fotos propias cuando se pueda.
+
+## 8. Cómo publicarlo
 1. Crear un repositorio público en GitHub (por ejemplo `recorrido-unsm`).
 2. Subir los archivos: `index.html`, `targets.mind`, `mindar-image-aframe.prod.js`, `escudo.png`.
 3. Settings → Pages → rama `main`, carpeta `/ (root)` → Save.
 4. Abrir `https://TU-USUARIO.github.io/recorrido-unsm/` en Chrome (Android) o Safari (iPhone).
 
-## 8. Consejos para la demo
+## 9. Consejos para la demo
 - Imprime `folleto-bienvenida-A4.pdf` en papel mate (que no brille).
 - Pon el folleto sobre la mesa y sostén el celular **en horizontal** para que entre todo el mapa.
 - Muévete despacio. Para mostrar las fichas, toca **❄️ Congelar** y luego toca los edificios.
 - Usa **🧭 Recorrido** para mostrar el paso a paso.
 
-## 9. Guion corto para exponer (2 minutos)
+## 10. Guion corto para exponer (2 minutos)
 1. "Cuando ingresamos a la UNSM no sabíamos dónde quedaba nada."
 2. "Hicimos un folleto de bienvenida con realidad aumentada, que funciona desde el navegador, sin instalar apps."
 3. *(Escanear)* "Al apuntar con el celular, los edificios salen en 3D sobre el mapa."
 4. *(Tocar un bloque)* "Si toco un edificio, veo qué facultad es y qué escuelas tiene."
-5. *(Recorrido)* "Y con el recorrido guiado, el ingresante conoce el campus paso a paso."
-6. "Usamos herramientas gratuitas: MindAR y A-Frame, como alternativa a Adobe Aero, que fue descontinuado."
+5. *(¿Cómo llego?)* "Si soy ingresante de Sistemas, elijo FISI y me muestra el camino desde la puerta, con un personaje que camina hasta allí."
+6. *(Recorrido)* "Y con el recorrido guiado, el ingresante conoce todo el campus paso a paso."
+7. "Usamos herramientas gratuitas: MindAR y A-Frame, como alternativa a Adobe Aero, que fue descontinuado."

@@ -34,6 +34,29 @@
                 border: 2px solid #f4b400; background: rgba(20,64,31,.92); color: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
     #btnCongelar { right: 12px; top: 70px; }
     #btnRecorrido { left: 12px; top: 70px; }
+    #btnRuta { left: 12px; top: 122px; }
+    #fichaFoto { width: 100%; max-height: 22vh; object-fit: cover; display: none; border-radius: 12px; margin: 6px 0 8px; }
+    #btnComoLlegar { background: #f4b400; color: #14401f; }
+    #fichaCredito { font-size: 11px; color: #888; margin: -4px 0 6px; display: none; }
+    /* Selector de destino */
+    #rutas { position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 31; background: #fff; border-radius: 20px; padding: 14px 14px 12px;
+             box-shadow: 0 10px 30px rgba(0,0,0,.4); transform: translateY(130%); transition: transform .35s ease; max-height: 62vh; overflow-y: auto; }
+    #rutas.visible { transform: translateY(0); }
+    #rutas h3 { margin: 0 0 8px; color: #14401f; font-size: 18px; }
+    .origen { display: flex; gap: 8px; margin-bottom: 10px; }
+    .origen button { flex: 1; padding: 10px; border-radius: 12px; border: 2px solid #2e8c3e; background: #fff; color: #2e8c3e; font-weight: 700; font-size: 14px; }
+    .origen button.sel { background: #2e8c3e; color: #fff; }
+    #destinos { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    #destinos button { padding: 10px 8px; border-radius: 12px; border: 0; background: #eef5ee; color: #14401f; font-weight: 700; font-size: 13.5px; text-align: left; }
+    #destinos button span { display: inline-block; width: 22px; height: 22px; border-radius: 50%; color: #fff; text-align: center; line-height: 22px; margin-right: 6px; font-size: 12px; }
+    #btnCerrarRutas { width: 100%; margin-top: 10px; padding: 11px; border: 0; border-radius: 12px; background: #eee; font-weight: 700; font-size: 15px; }
+    /* Aviso de ruta activa */
+    #rutaInfo { position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 29; background: #14401f; color: #fff; border-radius: 18px; padding: 12px 14px;
+                display: flex; align-items: center; gap: 10px; transform: translateY(150%); transition: transform .35s ease; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+    #rutaInfo.visible { transform: translateY(0); }
+    #rutaTexto { flex: 1; font-size: 14.5px; line-height: 1.35; }
+    #rutaTexto b { color: #f4b400; }
+    #rutaInfo button { border: 0; border-radius: 10px; padding: 9px 11px; font-weight: 700; font-size: 14px; }
     .flotante.activo { background: #f4b400; color: #14401f; }
 
     /* Ficha de información */
@@ -61,9 +84,9 @@
        Para agregar horarios u otros datos, edita aquí. "horario" vacío = no se muestra. */
     const INFO = {
       A: { titulo: 'Bloque A · FISI', sub: 'Facultad de Ingeniería de Sistemas e Informática', texto: 'Al norte del campus, cerca de la Puerta 1.', lista: ['Escuela: Ingeniería de Sistemas e Informática'], horario: '' },
-      B: { titulo: 'Bloque B · FMH', sub: 'Facultad de Medicina Humana', texto: 'Al norte, entre los bloques A y C.', lista: ['Escuela: Medicina Humana'], horario: '' },
+      B: { titulo: 'Bloque B · FMH', sub: 'Facultad de Medicina Humana', texto: 'Al norte, entre los bloques A y C.', lista: ['Escuela: Medicina Humana'], horario: '', credito: 'Foto: Manuel Rojas (Google Maps)' },
       C: { titulo: 'Bloque C · FCS', sub: 'Facultad de Ciencias de la Salud', texto: 'Al norte, junto al Centro Médico.', lista: ['Escuelas: Enfermería y Obstetricia'], horario: '' },
-      D: { titulo: 'Bloque D · FEH', sub: 'Facultad de Educación y Humanidades', texto: 'Dentro del anillo central, junto al Auditorio de Videoconferencias.', lista: ['Educación Inicial, Primaria y Secundaria', 'Idiomas'], horario: '' },
+      D: { titulo: 'Bloque D · FEH', sub: 'Facultad de Educación y Humanidades', texto: 'Dentro del anillo central, junto al Auditorio de Videoconferencias.', lista: ['Educación Inicial, Primaria y Secundaria', 'Idiomas'], horario: '', credito: 'Foto: Manuel Rojas (Google Maps)' },
       E: { titulo: 'Bloque E · FIAI', sub: 'Facultad de Ingeniería Agroindustrial', texto: 'Al oeste del anillo central.', lista: ['Escuela: Ingeniería Agroindustrial'], horario: '' },
       F: { titulo: 'Bloque F · FCA', sub: 'Facultad de Ciencias Agrarias', texto: 'En el centro-sur del anillo, entre los bloques E y G.', lista: ['Escuela: Agronomía'], horario: '' },
       G: { titulo: 'Bloque G · FICA', sub: 'Facultad de Ingeniería Civil y Arquitectura', texto: 'El bloque más grande del anillo central, al este.', lista: ['Escuelas: Ingeniería Civil y Arquitectura'], horario: '' },
@@ -84,9 +107,17 @@
     const ICONOS = { comedor: '🍽️', piscina: '🏊', campo: '⚽', losas: '🏀', medico: '🏥', auditorio: '🎤', puerta1: '🚪', puerta2: '🚪', monumento: '🗿', cafetin: '☕', cafeteria: '🥗' };
     const RECORRIDO = ['puerta1','monumento','A','B','C','medico','D','auditorio','cafeteria','G','F','E','cafetin','comedor','I','piscina','H','losas','campo','puerta2'];
 
+    /* Red de caminos (coordenadas del croquis oficial) para calcular rutas */
+    const NODOS = { p1:[470,112], g1:[425,132], ne:[380,152], nA:[304,152], n2:[258,152], nB:[231,152], nC:[172,152], n3:[144,152], nw:[18,152],
+      m1:[130,95], m2:[110,30], w1:[14,272], h1:[83,272], c1:[146,272], hc:[200,272], c2:[258,272], hg:[310,272], e1:[380,272],
+      cn1:[146,165], cn2:[258,165], a2:[258,232], sw:[40,440], s1:[146,449], s2:[200,450], s3:[258,452], nH:[330,455], se:[380,455],
+      e0:[380,215], e2:[380,300], e3:[380,395], eR:[470,260], q0:[415,495], q1:[440,520], p2:[450,575] };
+    const ARISTAS = 'p1-g1 g1-ne ne-nA nA-n2 n2-nB nB-nC nC-n3 n3-nw n3-m1 m1-m2 nw-w1 w1-h1 h1-c1 c1-hc hc-c2 c2-hg hg-e1 n3-cn1 cn1-c1 n2-cn2 cn2-a2 a2-c2 c1-s1 c2-s3 w1-sw sw-s1 s1-s2 s2-s3 s3-nH nH-se ne-e0 e0-e1 e1-e2 e2-e3 e3-se e2-eR se-q0 q0-q1 q1-p2'.split(' ').map(a => a.split('-'));
+
     /* Geometría: posiciones sobre el folleto (1 = ancho del folleto; centro = 0,0) */
-    const DATOS = {"lugares": [{"id": "A", "tipo": "bloque", "pts": [[-0.2058, 0.2768], [-0.1212, 0.2768], [-0.1212, 0.186], [-0.2058, 0.186]], "c": [-0.1635, 0.2314], "h": 0.05, "col": "#c46ea0", "sig": "FISI", "ed": [{"x": -0.1635, "y": 0.2582, "w": 0.0702, "d": 0.0227, "rot": 0}, {"x": -0.1821, "y": 0.2118, "w": 0.0289, "d": 0.0413, "rot": 0}, {"x": -0.1429, "y": 0.2118, "w": 0.0289, "d": 0.0413, "rot": 0}]}, {"id": "B", "tipo": "bloque", "pts": [[-0.2708, 0.2819], [-0.2058, 0.2768], [-0.2058, 0.1891], [-0.2708, 0.1891]], "c": [-0.2383, 0.2342], "h": 0.045, "col": "#aa6ec8", "sig": "FMH", "ed": [{"x": -0.2383, "y": 0.2603, "w": 0.0526, "d": 0.0227, "rot": 0}, {"x": -0.2383, "y": 0.2159, "w": 0.0526, "d": 0.0371, "rot": 0}]}, {"id": "C", "tipo": "bloque", "pts": [[-0.3307, 0.3108], [-0.2708, 0.284], [-0.2708, 0.1942], [-0.3224, 0.1942]], "c": [-0.2987, 0.2458], "h": 0.045, "col": "#466ec8", "sig": "FCS", "ed": [{"x": -0.2976, "y": 0.2757, "w": 0.0413, "d": 0.0289, "rot": 0}, {"x": -0.2966, "y": 0.2241, "w": 0.0392, "d": 0.0454, "rot": 0}]}, {"id": "D", "tipo": "bloque", "pts": [[-0.3245, 0.1653], [-0.211, 0.1653], [-0.211, 0.0528], [-0.3245, 0.0528]], "c": [-0.2677, 0.1091], "h": 0.04, "col": "#eb8c3c", "sig": "FEH", "ed": [{"x": -0.2677, "y": 0.1478, "w": 0.097, "d": 0.0206, "rot": 0}, {"x": -0.2961, "y": 0.0921, "w": 0.0402, "d": 0.0619, "rot": 0}, {"x": -0.2409, "y": 0.1044, "w": 0.0433, "d": 0.0371, "rot": 0}]}, {"id": "E", "tipo": "bloque", "pts": [[-0.4504, 0.0549], [-0.3327, 0.0549], [-0.3327, -0.1205], [-0.4297, -0.1081]], "c": [-0.3864, -0.0297], "h": 0.04, "col": "#e1af1e", "sig": "FIAI", "ed": [{"x": -0.3864, "y": 0.0332, "w": 0.0867, "d": 0.0227, "rot": 0}, {"x": -0.4029, "y": -0.0462, "w": 0.0413, "d": 0.1032, "rot": 0}, {"x": -0.3544, "y": -0.0462, "w": 0.031, "d": 0.1032, "rot": 0}]}, {"id": "F", "tipo": "bloque", "pts": [[-0.3327, 0.0497], [-0.2213, 0.0497], [-0.2213, -0.1277], [-0.3327, -0.1277]], "c": [-0.277, -0.039], "h": 0.035, "col": "#5aaa46", "sig": "FCA", "ed": [{"x": -0.277, "y": 0.0296, "w": 0.0949, "d": 0.0196, "rot": 0}, {"x": -0.3028, "y": -0.0565, "w": 0.0392, "d": 0.1197, "rot": 0}, {"x": -0.2502, "y": -0.0277, "w": 0.0413, "d": 0.0619, "rot": 0}]}, {"id": "G", "tipo": "bloque", "pts": [[-0.2213, 0.0982], [-0.0933, 0.0982], [-0.0933, -0.1329], [-0.2213, -0.1329]], "c": [-0.1573, -0.0173], "h": 0.055, "col": "#465faa", "sig": "FICA", "ed": [{"x": -0.1573, "y": 0.0745, "w": 0.1073, "d": 0.0227, "rot": 0}, {"x": -0.1893, "y": -0.038, "w": 0.0433, "d": 0.1651, "rot": 0}, {"x": -0.1294, "y": 0.0095, "w": 0.0516, "d": 0.0702, "rot": 0}, {"x": -0.1294, "y": -0.0813, "w": 0.0516, "d": 0.0784, "rot": 0}]}, {"id": "H", "tipo": "bloque", "pts": [[-0.2006, -0.1535], [-0.0799, -0.1535], [-0.0727, -0.232], [-0.2006, -0.232]], "c": [-0.1384, -0.1928], "h": 0.045, "col": "#3278dc", "sig": "FCE", "ed": [{"x": -0.1377, "y": -0.1721, "w": 0.1053, "d": 0.0206, "rot": 0}, {"x": -0.1377, "y": -0.2103, "w": 0.0887, "d": 0.0268, "rot": 0}]}, {"id": "I", "tipo": "bloque", "pts": [[-0.0004, -0.0607], [0.0512, -0.0297], [0.1069, -0.0875], [0.0532, -0.1391]], "c": [0.0527, -0.0793], "h": 0.05, "col": "#1eaaa5", "sig": "FDCP", "ed": [{"x": 0.0532, "y": -0.0844, "w": 0.064, "d": 0.031, "rot": -45}]}, {"id": "puerta1", "tipo": "servicio", "c": [0.0078, 0.2179], "nom": "Puerta 1"}, {"id": "monumento", "tipo": "servicio", "c": [-0.0902, 0.1602], "nom": "Monumento C. Vidaurre"}, {"id": "cafetin", "tipo": "servicio", "c": [-0.0593, 0.1117], "nom": "Cafetín 1"}, {"id": "medico", "tipo": "servicio", "c": [-0.3895, 0.3191], "nom": "Centro Médico", "ed": [{"x": -0.3874, "y": 0.3191, "w": 0.0351, "d": 0.0248, "rot": 0}]}, {"id": "auditorio", "tipo": "servicio", "c": [-0.1862, 0.0941], "nom": "Auditorio"}, {"id": "cafeteria", "tipo": "servicio", "c": [-0.2708, 0.057], "nom": "Cafetería saludable"}, {"id": "comedor", "tipo": "servicio", "c": [-0.0366, -0.0741], "nom": "Comedor", "ed": [{"x": -0.0366, "y": -0.0751, "w": 0.031, "d": 0.0495, "rot": 0}]}, {"id": "piscina", "tipo": "servicio", "c": [-0.0077, -0.1597], "nom": "Piscina"}, {"id": "losas", "tipo": "servicio", "c": [-0.244, -0.2186], "nom": "Losas deportivas"}, {"id": "campo", "tipo": "servicio", "c": [-0.405, -0.2237], "nom": "Campo deportivo"}, {"id": "puerta2", "tipo": "servicio", "c": [-0.0128, -0.2598], "nom": "Puerta 2"}], "extra": {"piscina": {"x": -0.0066, "y": -0.1587, "w": 0.033, "d": 0.031}, "arboles": [[0.0575, 0.2484], [-0.1168, -0.1383], [0.0833, -0.229], [-0.3213, -0.2775], [0.0461, 0.0512], [-0.3333, -0.3105], [-0.4421, 0.1554], [-0.0127, 0.3228], [-0.1286, 0.1617], [-0.2181, -0.2454], [-0.4228, 0.1134], [-0.4471, 0.2713], [0.0409, 0.2754], [-0.3945, 0.0741], [-0.2549, -0.0929], [-0.4448, 0.2128], [-0.4288, 0.2425], [0.0029, -0.3119], [0.0703, 0.1468], [-0.0466, -0.1927], [0.0445, 0.0023], [-0.2667, 0.0482], [-0.2409, 0.2764], [-0.304, -0.2947], [0.0656, 0.0473], [-0.1348, -0.2678], [0.0322, -0.2742], [-0.083, -0.2284], [-0.0864, -0.221], [-0.3085, -0.2746], [-0.038, 0.2595], [-0.0868, -0.1037], [0.075, 0.1389], [-0.2094, 0.0998], [0.0143, 0.1914], [0.0315, 0.101], [0.0125, -0.2133], [-0.1218, -0.2873]]}};
-    const LUGARES = DATOS.lugares, EXTRA = DATOS.extra;
+    const DATOS = {"lugares": [{"id": "A", "tipo": "bloque", "pts": [[-0.2058, 0.2768], [-0.1212, 0.2768], [-0.1212, 0.186], [-0.2058, 0.186]], "c": [-0.1635, 0.2314], "h": 0.05, "col": "#c46ea0", "sig": "FISI", "ed": [{"x": -0.1635, "y": 0.2582, "w": 0.0702, "d": 0.0227, "rot": 0}, {"x": -0.1821, "y": 0.2118, "w": 0.0289, "d": 0.0413, "rot": 0}, {"x": -0.1429, "y": 0.2118, "w": 0.0289, "d": 0.0413, "rot": 0}]}, {"id": "B", "tipo": "bloque", "pts": [[-0.2708, 0.2819], [-0.2058, 0.2768], [-0.2058, 0.1891], [-0.2708, 0.1891]], "c": [-0.2383, 0.2342], "h": 0.045, "col": "#aa6ec8", "sig": "FMH", "ed": [{"x": -0.2383, "y": 0.2603, "w": 0.0526, "d": 0.0227, "rot": 0}, {"x": -0.2383, "y": 0.2159, "w": 0.0526, "d": 0.0371, "rot": 0}]}, {"id": "C", "tipo": "bloque", "pts": [[-0.3307, 0.3108], [-0.2708, 0.284], [-0.2708, 0.1942], [-0.3224, 0.1942]], "c": [-0.2987, 0.2458], "h": 0.045, "col": "#466ec8", "sig": "FCS", "ed": [{"x": -0.2976, "y": 0.2757, "w": 0.0413, "d": 0.0289, "rot": 0}, {"x": -0.2966, "y": 0.2241, "w": 0.0392, "d": 0.0454, "rot": 0}]}, {"id": "D", "tipo": "bloque", "pts": [[-0.3245, 0.1653], [-0.211, 0.1653], [-0.211, 0.0528], [-0.3245, 0.0528]], "c": [-0.2677, 0.1091], "h": 0.04, "col": "#eb8c3c", "sig": "FEH", "ed": [{"x": -0.2677, "y": 0.1478, "w": 0.097, "d": 0.0206, "rot": 0}, {"x": -0.2961, "y": 0.0921, "w": 0.0402, "d": 0.0619, "rot": 0}, {"x": -0.2409, "y": 0.1044, "w": 0.0433, "d": 0.0371, "rot": 0}]}, {"id": "E", "tipo": "bloque", "pts": [[-0.4504, 0.0549], [-0.3327, 0.0549], [-0.3327, -0.1205], [-0.4297, -0.1081]], "c": [-0.3864, -0.0297], "h": 0.04, "col": "#e1af1e", "sig": "FIAI", "ed": [{"x": -0.3864, "y": 0.0332, "w": 0.0867, "d": 0.0227, "rot": 0}, {"x": -0.4029, "y": -0.0462, "w": 0.0413, "d": 0.1032, "rot": 0}, {"x": -0.3544, "y": -0.0462, "w": 0.031, "d": 0.1032, "rot": 0}]}, {"id": "F", "tipo": "bloque", "pts": [[-0.3327, 0.0497], [-0.2213, 0.0497], [-0.2213, -0.1277], [-0.3327, -0.1277]], "c": [-0.277, -0.039], "h": 0.035, "col": "#5aaa46", "sig": "FCA", "ed": [{"x": -0.277, "y": 0.0296, "w": 0.0949, "d": 0.0196, "rot": 0}, {"x": -0.3028, "y": -0.0565, "w": 0.0392, "d": 0.1197, "rot": 0}, {"x": -0.2502, "y": -0.0277, "w": 0.0413, "d": 0.0619, "rot": 0}]}, {"id": "G", "tipo": "bloque", "pts": [[-0.2213, 0.0982], [-0.0933, 0.0982], [-0.0933, -0.1329], [-0.2213, -0.1329]], "c": [-0.1573, -0.0173], "h": 0.055, "col": "#465faa", "sig": "FICA", "ed": [{"x": -0.1573, "y": 0.0745, "w": 0.1073, "d": 0.0227, "rot": 0}, {"x": -0.1893, "y": -0.038, "w": 0.0433, "d": 0.1651, "rot": 0}, {"x": -0.1294, "y": 0.0095, "w": 0.0516, "d": 0.0702, "rot": 0}, {"x": -0.1294, "y": -0.0813, "w": 0.0516, "d": 0.0784, "rot": 0}]}, {"id": "H", "tipo": "bloque", "pts": [[-0.2006, -0.1535], [-0.0799, -0.1535], [-0.0727, -0.232], [-0.2006, -0.232]], "c": [-0.1384, -0.1928], "h": 0.045, "col": "#3278dc", "sig": "FCE", "ed": [{"x": -0.1377, "y": -0.1721, "w": 0.1053, "d": 0.0206, "rot": 0}, {"x": -0.1377, "y": -0.2103, "w": 0.0887, "d": 0.0268, "rot": 0}]}, {"id": "I", "tipo": "bloque", "pts": [[-0.0004, -0.0607], [0.0512, -0.0297], [0.1069, -0.0875], [0.0532, -0.1391]], "c": [0.0527, -0.0793], "h": 0.05, "col": "#1eaaa5", "sig": "FDCP", "ed": [{"x": 0.0532, "y": -0.0844, "w": 0.064, "d": 0.031, "rot": -45}]}, {"id": "puerta1", "tipo": "servicio", "c": [0.0078, 0.2179], "nom": "Puerta 1"}, {"id": "monumento", "tipo": "servicio", "c": [-0.0902, 0.1602], "nom": "Monumento C. Vidaurre"}, {"id": "cafetin", "tipo": "servicio", "c": [-0.0593, 0.1117], "nom": "Cafetín 1"}, {"id": "medico", "tipo": "servicio", "c": [-0.3895, 0.3191], "nom": "Centro Médico", "ed": [{"x": -0.3874, "y": 0.3191, "w": 0.0351, "d": 0.0248, "rot": 0}]}, {"id": "auditorio", "tipo": "servicio", "c": [-0.1862, 0.0941], "nom": "Auditorio"}, {"id": "cafeteria", "tipo": "servicio", "c": [-0.2708, 0.057], "nom": "Cafetería saludable"}, {"id": "comedor", "tipo": "servicio", "c": [-0.0366, -0.0741], "nom": "Comedor", "ed": [{"x": -0.0366, "y": -0.0751, "w": 0.031, "d": 0.0495, "rot": 0}]}, {"id": "piscina", "tipo": "servicio", "c": [-0.0077, -0.1597], "nom": "Piscina"}, {"id": "losas", "tipo": "servicio", "c": [-0.244, -0.2186], "nom": "Losas deportivas"}, {"id": "campo", "tipo": "servicio", "c": [-0.405, -0.2237], "nom": "Campo deportivo"}, {"id": "puerta2", "tipo": "servicio", "c": [-0.0128, -0.2598], "nom": "Puerta 2"}], "extra": {"piscina": {"x": -0.0066, "y": -0.1587, "w": 0.033, "d": 0.031}, "arboles": [[0.0575, 0.2484], [-0.1168, -0.1383], [0.0833, -0.229], [-0.3213, -0.2775], [0.0461, 0.0512], [-0.3333, -0.3105], [-0.4421, 0.1554], [-0.0127, 0.3228], [-0.1286, 0.1617], [-0.2181, -0.2454], [-0.4228, 0.1134], [-0.4471, 0.2713], [0.0409, 0.2754], [-0.3945, 0.0741], [-0.2549, -0.0929], [-0.4448, 0.2128], [-0.4288, 0.2425], [0.0029, -0.3119], [0.0703, 0.1468], [-0.0466, -0.1927], [0.0445, 0.0023], [-0.2667, 0.0482], [-0.2409, 0.2764], [-0.304, -0.2947], [0.0656, 0.0473], [-0.1348, -0.2678], [0.0322, -0.2742], [-0.083, -0.2284], [-0.0864, -0.221], [-0.3085, -0.2746], [-0.038, 0.2595], [-0.0868, -0.1037], [0.075, 0.1389], [-0.2094, 0.0998], [0.0143, 0.1914], [0.0315, 0.101], [0.0125, -0.2133], [-0.1218, -0.2873]]}, "geo": {"S": 3.62, "OX": 80, "OY": 70, "W": 3508, "H": 2480}};
+    const LUGARES = DATOS.lugares, EXTRA = DATOS.extra, G = DATOS.geo;
+    const a3D = (x, y) => [(G.OX + x * G.S) / G.W - 0.5, (G.H / 2 - (G.OY + y * G.S)) / G.W];
 
     /* ===================== COMPONENTES ===================== */
     // Edificio estilo maqueta: paredes claras + techo de teja a cuatro aguas
@@ -183,12 +214,15 @@
 
   <div id="aviso" class="aviso">✅ Mapa detectado</div>
   <button id="btnRecorrido" class="flotante">🧭 Recorrido</button>
+  <button id="btnRuta" class="flotante">📍 ¿Cómo llego?</button>
   <button id="btnCongelar" class="flotante">❄️ Congelar</button>
 
   <div id="ficha">
     <div id="fichaFranja"></div>
     <div id="fichaCuerpo">
       <div id="fichaPaso"></div>
+      <img id="fichaFoto" alt="">
+      <div id="fichaCredito"></div>
       <h2 id="fichaTitulo"></h2>
       <p id="fichaSub"></p>
       <p id="fichaTexto"></p>
@@ -197,8 +231,24 @@
     <div id="fichaBotones">
       <button id="btnAnterior">◀ Anterior</button>
       <button id="btnCerrar">Cerrar</button>
+      <button id="btnComoLlegar">📍 Cómo llegar</button>
       <button id="btnSiguiente">Siguiente ▶</button>
     </div>
+  </div>
+
+  <div id="rutas">
+    <h3>📍 ¿A dónde quieres ir?</h3>
+    <div class="origen">
+      <button data-origen="puerta1" class="sel">Desde Puerta 1</button>
+      <button data-origen="puerta2">Desde Puerta 2</button>
+    </div>
+    <div id="destinos"></div>
+    <button id="btnCerrarRutas">Cerrar</button>
+  </div>
+  <div id="rutaInfo">
+    <div id="rutaTexto"></div>
+    <button id="btnOtraRuta" style="background:#f4b400;color:#14401f">Otro destino</button>
+    <button id="btnQuitarRuta" style="background:#fff;color:#14401f">✕</button>
   </div>
 
   <a-scene
@@ -315,11 +365,19 @@
       document.querySelector('#fichaSub').textContent = I.sub;
       document.querySelector('#fichaTexto').textContent = I.texto + (I.horario ? `  🕒 Horario: ${I.horario}` : '');
       document.querySelector('#fichaLista').innerHTML = I.lista.map(t => `<li>${t}</li>`).join('');
+      // Foto real: si existe el archivo foto-<lugar>.jpg en el repositorio, se muestra
+      const foto = document.querySelector('#fichaFoto'); foto.style.display = 'none';
+      const cred = document.querySelector('#fichaCredito'); cred.style.display = 'none'; cred.textContent = I.credito || '';
+      foto.onload = () => { foto.style.display = 'block'; if (I.credito) cred.style.display = 'block'; };
+      foto.onerror = () => { if (foto.src.endsWith('.jpg')) foto.src = `foto-${id.toLowerCase()}.png`; };
+      foto.src = `foto-${id.toLowerCase()}.jpg`;
+      fichaId = id;
       const enRecorrido = pasoRecorrido >= 0;
       document.querySelector('#fichaPaso').textContent = enRecorrido ? `Recorrido · paso ${pasoRecorrido + 1} de ${RECORRIDO.length}` : '';
       document.querySelector('#btnAnterior').style.display = enRecorrido ? '' : 'none';
       document.querySelector('#btnSiguiente').style.display = enRecorrido ? '' : 'none';
       document.querySelector('#btnCerrar').textContent = enRecorrido ? 'Salir' : 'Cerrar';
+      document.querySelector('#btnComoLlegar').style.display = enRecorrido || id === origenRuta ? 'none' : '';
       ficha.classList.add('visible');
       // resaltar el lugar en la maqueta
       document.querySelector('#lugar-' + id).emit('saltar', null, false);
@@ -329,7 +387,100 @@
     document.querySelector('#btnCerrar').addEventListener('click', cerrarFicha);
     document.querySelector('#btnSiguiente').addEventListener('click', () => { pasoRecorrido = (pasoRecorrido + 1) % RECORRIDO.length; abrirFicha(RECORRIDO[pasoRecorrido]); });
     document.querySelector('#btnAnterior').addEventListener('click', () => { pasoRecorrido = (pasoRecorrido - 1 + RECORRIDO.length) % RECORRIDO.length; abrirFicha(RECORRIDO[pasoRecorrido]); });
-    btnRecorrido.addEventListener('click', () => { pasoRecorrido = 0; btnRecorrido.classList.add('activo'); abrirFicha(RECORRIDO[0]); });
+    btnRecorrido.addEventListener('click', () => { quitarRuta(); panelRutas.classList.remove('visible'); pasoRecorrido = 0; btnRecorrido.classList.add('activo'); abrirFicha(RECORRIDO[0]); });
+
+    /* ---------- ¿Cómo llego? ---------- */
+    let origenRuta = 'puerta1', fichaId = null;
+    const panelRutas = document.querySelector('#rutas'), rutaInfo = document.querySelector('#rutaInfo');
+    const btnRuta = document.querySelector('#btnRuta');
+    // botones de destino
+    const DESTINOS = ['A','B','C','D','E','F','G','H','I','comedor','cafetin','cafeteria','medico','auditorio','piscina','losas','campo','monumento','puerta1','puerta2'];
+    document.querySelector('#destinos').innerHTML = DESTINOS.map(id => {
+      const L = LUGARES.find(l => l.id === id), I = INFO[id];
+      const marca = L.tipo === 'bloque' ? `<span style="background:${L.col}">${id}</span>${L.sig}` : I.titulo;
+      return `<button data-destino="${id}">${marca}</button>`;
+    }).join('');
+    document.querySelectorAll('.origen button').forEach(b => b.addEventListener('click', () => {
+      origenRuta = b.dataset.origen;
+      document.querySelectorAll('.origen button').forEach(x => x.classList.toggle('sel', x === b));
+    }));
+    document.querySelectorAll('#destinos button').forEach(b => b.addEventListener('click', () => { panelRutas.classList.remove('visible'); trazarRuta(b.dataset.destino); }));
+    btnRuta.addEventListener('click', () => { cerrarFicha(); rutaInfo.classList.remove('visible'); panelRutas.classList.add('visible'); });
+    document.querySelector('#btnCerrarRutas').addEventListener('click', () => panelRutas.classList.remove('visible'));
+    document.querySelector('#btnOtraRuta').addEventListener('click', () => { rutaInfo.classList.remove('visible'); panelRutas.classList.add('visible'); });
+    document.querySelector('#btnQuitarRuta').addEventListener('click', quitarRuta);
+    document.querySelector('#btnComoLlegar').addEventListener('click', () => { const id = fichaId; cerrarFicha(); trazarRuta(id); });
+
+    // camino más corto (Dijkstra) por la red de pistas del croquis
+    const N3 = {}; Object.entries(NODOS).forEach(([k, p]) => N3[k] = a3D(p[0], p[1]));
+    const VEC = {}; Object.keys(N3).forEach(k => VEC[k] = []);
+    const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+    ARISTAS.forEach(([a, b]) => { const d = dist(N3[a], N3[b]); VEC[a].push([b, d]); VEC[b].push([a, d]); });
+    function nodoCercano(p) { let m = null, md = 1e9; for (const k in N3) { const d = dist(N3[k], p); if (d < md) { md = d; m = k; } } return m; }
+    function caminoMasCorto(ini, fin) {
+      const D = {}, prev = {}, pend = new Set(Object.keys(N3)); Object.keys(N3).forEach(k => D[k] = Infinity); D[ini] = 0;
+      while (pend.size) {
+        let u = null; for (const k of pend) if (u === null || D[k] < D[u]) u = k;
+        pend.delete(u); if (u === fin) break;
+        for (const [v, w] of VEC[u]) if (D[u] + w < D[v]) { D[v] = D[u] + w; prev[v] = u; }
+      }
+      const r = [fin]; while (r[0] !== ini) r.unshift(prev[r[0]]); return r;
+    }
+
+    const rutaEl = document.createElement('a-entity'); rutaEl.id = 'ruta'; maqueta.appendChild(rutaEl);
+    let animRuta = null;
+    function quitarRuta() {
+      if (animRuta) cancelAnimationFrame(animRuta), animRuta = null;
+      rutaEl.removeObject3D('mesh'); rutaInfo.classList.remove('visible'); marcador.setAttribute('visible', false);
+    }
+    function trazarRuta(destino) {
+      quitarRuta();
+      const origen = origenRuta === destino ? (destino === 'puerta1' ? 'puerta2' : 'puerta1') : origenRuta;
+      const Lo = LUGARES.find(l => l.id === origen), Ld = LUGARES.find(l => l.id === destino);
+      const nIni = nodoCercano(Lo.c), nFin = nodoCercano(Ld.c);
+      const pts = [Lo.c, ...caminoMasCorto(nIni, nFin).map(k => N3[k]), Ld.c]
+        .filter((p, i, arr) => i === 0 || dist(p, arr[i - 1]) > 0.004)
+        .map(p => new THREE.Vector3(p[0], p[1], 0.014));
+      const curva = new THREE.CatmullRomCurve3(pts, false, 'centripetal', 0.2);
+      const largo = curva.getLength(), seg = Math.max(60, Math.round(largo * 400));
+      const g = new THREE.Group();
+      const tubo = new THREE.Mesh(new THREE.TubeGeometry(curva, seg, 0.0065, 10, false), new THREE.MeshBasicMaterial({ color: '#0057ff' }));
+      const brillo = new THREE.Mesh(new THREE.TubeGeometry(curva, seg, 0.0095, 10, false), new THREE.MeshBasicMaterial({ color: '#ffffff', side: THREE.BackSide }));
+      g.add(brillo, tubo);
+      // personaje que camina
+      const persona = new THREE.Group();
+      const cuerpo = new THREE.Mesh(new THREE.CylinderGeometry(0.0055, 0.0065, 0.02, 12).rotateX(Math.PI / 2).translate(0, 0, 0.012), new THREE.MeshStandardMaterial({ color: '#2e8c3e' }));
+      const cabeza = new THREE.Mesh(new THREE.SphereGeometry(0.0062, 12, 10).translate(0, 0, 0.0285), new THREE.MeshStandardMaterial({ color: '#f1c27d' }));
+      const mochila = new THREE.Mesh(new THREE.BoxGeometry(0.007, 0.004, 0.009).translate(0, -0.006, 0.014), new THREE.MeshStandardMaterial({ color: '#f4b400' }));
+      const puntos = []; const geoP = new THREE.SphereGeometry(0.0045, 10, 8), matP = new THREE.MeshBasicMaterial({ color: '#ffffff' });
+      for (let i = 0; i < 12; i++) { const s = new THREE.Mesh(geoP, matP); s.visible = false; puntos.push(s); g.add(s); }
+      persona.add(cuerpo, cabeza, mochila); persona.scale.setScalar(1.7); persona.visible = false; g.add(persona);
+      rutaEl.setObject3D('mesh', g);
+      // marcador en el destino
+      marcador.setAttribute('position', `${Ld.c[0]} ${Ld.c[1]} 0.003`); marcador.setAttribute('visible', true);
+      document.querySelector('#lugar-' + destino).emit('saltar', null, false);
+      // animación: la línea se dibuja y luego el personaje la recorre una y otra vez
+      const total = tubo.geometry.index.count, t0 = performance.now(), DIBUJO = 1600, VEL = 0.09;
+      const fin = new THREE.Vector3(), sig = new THREE.Vector3();
+      const paso = (ahora) => {
+        const tt = ahora - t0;
+        const k = Math.min(tt / DIBUJO, 1), n = Math.floor(total * k / 3) * 3;
+        tubo.geometry.setDrawRange(0, n); brillo.geometry.setDrawRange(0, n);
+        if (k >= 1) {
+          persona.visible = true;
+          const u = ((tt - DIBUJO) / 1000 * VEL / largo) % 1;
+          curva.getPointAt(u, fin); curva.getPointAt(Math.min(u + 0.01, 1), sig);
+          persona.position.copy(fin).setZ(0.012 + Math.abs(Math.sin(tt / 120)) * 0.003);
+          persona.rotation.z = Math.atan2(sig.y - fin.y, sig.x - fin.x) - Math.PI / 2;
+          puntos.forEach((s, i) => { s.visible = true; curva.getPointAt(((tt / 1000) * 0.25 + i / puntos.length) % 1, s.position); });
+        }
+        animRuta = requestAnimationFrame(paso);
+      };
+      animRuta = requestAnimationFrame(paso);
+      const nombre = l => l.tipo === 'bloque' ? `Bloque ${l.id} · ${l.sig}` : INFO[l.id].titulo.replace(/^\S+\s/, '');
+      document.querySelector('#rutaTexto').innerHTML = `🚶 Desde <b>${nombre(Lo)}</b><br>hasta <b>${nombre(Ld)}</b>`;
+      rutaInfo.classList.add('visible');
+    }
 
     let ultimoToque = 0;
     escena.addEventListener('loaded', () => {
@@ -359,7 +510,7 @@
       if (mostrando) { seguidor().seguir(false); return; }
       mostrando = true; seguidor().seguir(true); contenido.object3D.visible = true;
       contenido.querySelectorAll('.anim').forEach(el => el.emit('aparecer', null, false));
-      btnCongelar.style.display = btnRecorrido.style.display = 'block';
+      btnCongelar.style.display = btnRecorrido.style.display = btnRuta.style.display = 'block';
       aviso.classList.add('visible'); clearTimeout(timerAviso); timerAviso = setTimeout(() => aviso.classList.remove('visible'), 1800);
       if (navigator.vibrate) navigator.vibrate(60);
     });
@@ -367,8 +518,8 @@
       seguidor().detener();
       timerPerdido = setTimeout(() => {
         if (congelado) return;
-        mostrando = false; contenido.object3D.visible = false; btnCongelar.style.display = btnRecorrido.style.display = 'none';
-        cerrarFicha(); reiniciar();
+        mostrando = false; contenido.object3D.visible = false; btnCongelar.style.display = btnRecorrido.style.display = btnRuta.style.display = 'none';
+        cerrarFicha(); quitarRuta(); panelRutas.classList.remove('visible'); reiniciar();
       }, 1200);
     });
   </script>
