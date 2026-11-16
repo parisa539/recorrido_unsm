@@ -35,20 +35,18 @@
     #btnCongelar { right: 12px; top: 70px; }
     #btnRecorrido { left: 12px; top: 70px; }
     #btnRuta { left: 12px; top: 122px; }
-    #btnCroquis { right: 12px; top: 122px; display: block; }
-    /* Apartado del croquis */
-    #croquis { position: fixed; inset: 0; z-index: 55; background: #0f2c17; display: none; flex-direction: column; }
-    #croquis.visible { display: flex; }
-    #croquisCab { color: #fff; padding: 14px 16px 8px; font-weight: 800; font-size: 18px; }
-    #croquisCab small { display: block; font-weight: 500; font-size: 12.5px; opacity: .75; margin-top: 2px; }
-    #croquisZona { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 8px; -webkit-overflow-scrolling: touch; }
-    #croquisZona.ampliado { display: block; }
-    #croquisImg { max-width: 100%; max-height: 100%; border-radius: 10px; background: #fff; }
-    #croquisZona.ampliado #croquisImg { max-width: none; max-height: none; width: 260%; }
-    #croquisBotones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 12px 14px; }
-    #croquisBotones button, #croquisBotones label { border: 0; border-radius: 12px; padding: 12px 8px; font-weight: 700; font-size: 14.5px; text-align: center; background: #fff; color: #14401f; }
-    #croquisBotones .principal { background: #f4b400; }
-    #croquisArchivo { display: none; }
+    #btnSubir { right: 12px; top: 122px; }
+    /* Panel "Subir imagen del croquis" */
+    #subir { position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 45; background: #fff; border-radius: 20px; padding: 16px 14px 12px;
+             box-shadow: 0 10px 30px rgba(0,0,0,.45); transform: translateY(140%); transition: transform .35s ease; }
+    #subir.visible { transform: translateY(0); }
+    #subir h3 { margin: 0 0 6px; color: #14401f; font-size: 18px; }
+    #subir p { margin: 0 0 12px; color: #444; font-size: 14px; line-height: 1.4; }
+    #subir .op { display: block; width: 100%; margin-bottom: 8px; padding: 13px; border-radius: 12px; border: 0; font-weight: 800; font-size: 15px; text-align: center; }
+    #subirArchivo { display: none; }
+    #avisoImg { position: fixed; left: 50%; top: 18px; transform: translate(-50%, -120px); z-index: 46; transition: transform .35s ease; background: #fff3cd; color: #6b4e00;
+                border: 2px solid #f4b400; border-radius: 14px; padding: 10px 14px; font-size: 14px; max-width: 92vw; text-align: center; font-weight: 600; }
+    #avisoImg.visible { transform: translate(-50%, 0); }
     #fichaFoto { width: 100%; max-height: 22vh; object-fit: cover; display: none; border-radius: 12px; margin: 6px 0 8px; }
     #btnComoLlegar { background: #f4b400; color: #14401f; }
     /* Visor de fotos en grande */
@@ -219,11 +217,16 @@
     AFRAME.registerComponent('seguir-suave', {
       schema: { objetivo: { type: 'selector' }, rapidez: { default: 6 }, zonaPos: { default: 0.03 }, zonaRot: { default: 3 } },
       init() { this.p = new THREE.Vector3(); this.q = new THREE.Quaternion(); this.s = new THREE.Vector3(); this.siguiendo = false; this.moviendo = false; this.saltar = true; this.el.object3D.visible = false; },
-      seguir(saltar) { this.siguiendo = true; if (saltar) this.saltar = true; },
+      seguir(saltar, objetivo, ajuste) {
+        if (objetivo) { this.objetivo = objetivo; this.ajuste = ajuste || null; }
+        this.siguiendo = true; if (saltar) this.saltar = true;
+      },
       detener() { this.siguiendo = false; },
       tick(t, dt) {
         if (!this.siguiendo || !dt) return;
-        const o = this.data.objetivo.object3D; o.updateMatrixWorld(true); o.matrixWorld.decompose(this.p, this.q, this.s);
+        const o = (this.objetivo || this.data.objetivo).object3D; o.updateMatrixWorld(true);
+        (this.m || (this.m = new THREE.Matrix4())).copy(o.matrixWorld); if (this.ajuste) this.m.multiply(this.ajuste);
+        this.m.decompose(this.p, this.q, this.s);
         if (!this.s.x) return;
         const yo = this.el.object3D;
         if (this.saltar) { yo.position.copy(this.p); yo.quaternion.copy(this.q); yo.scale.copy(this.s); this.saltar = false; this.moviendo = false; return; }
@@ -243,25 +246,22 @@
     <h1>Recorrido de bienvenida UNSM</h1>
     <p>Toca <b>Comenzar</b>, permite la cámara y apunta al <b>mapa del folleto</b>. Los edificios saldrán en 3D: tócalos para saber qué hay en cada uno.</p>
     <button id="btnIniciar">Comenzar</button>
-    <button id="btnCroquisInicio" style="background:transparent;color:#fff;border:2px solid #fff;border-radius:999px;padding:10px 22px;font-weight:700;font-size:15px">🗺️ Ver croquis</button>
   </div>
 
   <div id="aviso" class="aviso">✅ Mapa detectado</div>
   <button id="btnRecorrido" class="flotante">🧭 Recorrido</button>
   <button id="btnRuta" class="flotante">📍 ¿Cómo llego?</button>
   <button id="btnCongelar" class="flotante">❄️ Congelar</button>
-  <button id="btnCroquis" class="flotante" style="display:none">🗺️ Croquis</button>
+  <button id="btnSubir" class="flotante">📤 Subir imagen</button>
+  <div id="avisoImg"></div>
 
-  <div id="croquis">
-    <div id="croquisCab">🗺️ Croquis de la Ciudad Universitaria<small id="croquisNota">Croquis oficial UNSM</small></div>
-    <div id="croquisZona"><img id="croquisImg" src="./croquis.jpg" alt="Croquis"></div>
-    <div id="croquisBotones">
-      <button id="croquisAmpliar">🔍 Ampliar</button>
-      <label class="principal" for="croquisArchivo">📤 Subir imagen</label>
-      <input type="file" id="croquisArchivo" accept="image/*">
-      <button id="croquisOficial">↩️ Croquis oficial</button>
-      <button id="croquisCerrar">Cerrar</button>
-    </div>
+  <div id="subir">
+    <h3>📤 Subir imagen del croquis</h3>
+    <p>Elige una <b>foto o captura</b> del croquis oficial o del folleto. La app la escaneará en lugar de la cámara y mostrará la maqueta 3D encima.</p>
+    <label class="op" for="subirArchivo" style="background:#f4b400;color:#14401f">📁 Elegir imagen del celular</label>
+    <input type="file" id="subirArchivo" accept="image/*">
+    <button class="op" id="subirOficial" style="background:#2e8c3e;color:#fff">🗺️ Usar el croquis oficial</button>
+    <button class="op" id="subirCancelar" style="background:#eee;color:#333">Cancelar</button>
   </div>
 
   <div id="ficha">
@@ -317,7 +317,8 @@
     <a-entity light="type: ambient; intensity: 0.75"></a-entity>
 
     <!-- El folleto detectado (MindAR lo mueve aquí) -->
-    <a-entity id="folleto" mindar-image-target="targetIndex: 0"></a-entity>
+    <a-entity id="folleto" class="objetivo" mindar-image-target="targetIndex: 0"></a-entity>          <!-- folleto de bienvenida -->
+    <a-entity id="croquisAR" class="objetivo" mindar-image-target="targetIndex: 1"></a-entity>       <!-- croquis oficial -->
 
     <!-- La maqueta: el folleto es el piso. 1 = ancho del folleto; "z" = altura sobre el papel -->
     <a-entity id="contenido" seguir-suave="objetivo: #folleto">
@@ -601,41 +602,6 @@
     });
     document.querySelector('#fichaFoto').addEventListener('click', e => { if (fichaId) verFoto(fichaId, e.target.src); });
 
-    /* ---------- Apartado del croquis (con opción de subir otra imagen) ---------- */
-    const croquis = document.querySelector('#croquis'), croquisImg = document.querySelector('#croquisImg'), croquisZona = document.querySelector('#croquisZona');
-    const CLAVE = 'croquisSubido';
-    function mostrarCroquisGuardado() {
-      let guardado = null; try { guardado = localStorage.getItem(CLAVE); } catch (e) {}
-      croquisImg.src = guardado || './croquis.jpg';
-      document.querySelector('#croquisNota').textContent = guardado ? 'Imagen subida desde este celular' : 'Croquis oficial UNSM';
-      document.querySelector('#croquisOficial').style.visibility = guardado ? 'visible' : 'hidden';
-    }
-    function abrirCroquis() { mostrarCroquisGuardado(); croquisZona.classList.remove('ampliado'); document.querySelector('#croquisAmpliar').textContent = '🔍 Ampliar'; croquis.classList.add('visible'); }
-    document.querySelector('#btnCroquis').addEventListener('click', abrirCroquis);
-    document.querySelector('#btnCroquisInicio').addEventListener('click', abrirCroquis);
-    document.querySelector('#croquisCerrar').addEventListener('click', () => croquis.classList.remove('visible'));
-    document.querySelector('#croquisAmpliar').addEventListener('click', e => {
-      const amp = croquisZona.classList.toggle('ampliado'); e.target.textContent = amp ? '🔎 Ver completo' : '🔍 Ampliar';
-    });
-    document.querySelector('#croquisOficial').addEventListener('click', () => { try { localStorage.removeItem(CLAVE); } catch (e) {} mostrarCroquisGuardado(); });
-    document.querySelector('#croquisArchivo').addEventListener('change', e => {
-      const archivo = e.target.files[0]; if (!archivo) return;
-      const img = new Image();
-      img.onload = () => {   // se achica para que entre en la memoria del celular
-        const max = 1600, k = Math.min(1, max / Math.max(img.width, img.height));
-        const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        const datos = c.toDataURL('image/jpeg', 0.82);
-        try { localStorage.setItem(CLAVE, datos); } catch (err) {}
-        croquisImg.src = datos;
-        document.querySelector('#croquisNota').textContent = 'Imagen subida desde este celular';
-        document.querySelector('#croquisOficial').style.visibility = 'visible';
-        URL.revokeObjectURL(img.src);
-      };
-      img.src = URL.createObjectURL(archivo);
-      e.target.value = '';
-    });
-
     let ultimoToque = 0;
     escena.addEventListener('loaded', () => {
       document.querySelectorAll('.tocable').forEach(el => el.addEventListener('click', () => {
@@ -646,11 +612,11 @@
 
     /* ---------- Cámara, detección y congelar ---------- */
     const sistemaAR = () => escena.systems['mindar-image-system'];
-    document.querySelector('#btnIniciar').addEventListener('click', () => {
-      document.querySelector('#inicio').style.display = 'none';
-      document.querySelector('#btnCroquis').style.display = 'block';
-      escena.hasLoaded ? sistemaAR().start() : escena.addEventListener('loaded', () => sistemaAR().start());
-    });
+    let arIniciado = false;
+    function iniciarAR() {
+      const go = () => { sistemaAR().start(); arIniciado = true; };
+      escena.hasLoaded ? go() : escena.addEventListener('loaded', go, { once: true });
+    }
     function congelar(si) {
       congelado = si;
       if (si) { sistemaAR().pause(false); clearTimeout(timerPerdido); } else { sistemaAR().unpause(); }
@@ -659,24 +625,100 @@
     btnCongelar.addEventListener('click', () => congelar(!congelado));
     const seguidor = () => contenido.components['seguir-suave'];
     function reiniciar() { maqueta.querySelectorAll('.reiniciar').forEach(el => el.setAttribute('scale', el.dataset.escala)); }
+    function ocultarTodo() {
+      mostrando = false; contenido.object3D.visible = false; seguidor().detener();
+      btnCongelar.style.display = btnRecorrido.style.display = btnRuta.style.display = 'none';
+      cerrarFicha(); quitarRuta(); panelRutas.classList.remove('visible'); reiniciar();
+    }
 
-    folleto.addEventListener('targetFound', () => {
-      clearTimeout(timerPerdido);
-      if (mostrando) { seguidor().seguir(false); return; }
-      mostrando = true; seguidor().seguir(true); contenido.object3D.visible = true;
-      contenido.querySelectorAll('.anim').forEach(el => el.emit('aparecer', null, false));
-      btnCongelar.style.display = btnRecorrido.style.display = btnRuta.style.display = 'block';
-      document.querySelector('#btnCroquis').style.display = 'block';
-      aviso.classList.add('visible'); clearTimeout(timerAviso); timerAviso = setTimeout(() => aviso.classList.remove('visible'), 1800);
-      if (navigator.vibrate) navigator.vibrate(60);
+    /* ---------- Subir imagen del croquis: la imagen reemplaza a la cámara ---------- */
+    const btnSubir = document.querySelector('#btnSubir'), panelSubir = document.querySelector('#subir'), avisoImg = document.querySelector('#avisoImg');
+    let modoImagen = false, streamImagen = null, intervaloImagen = null, timerNoEncontrado;
+    const gumOriginal = navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices) : null;
+    if (navigator.mediaDevices) navigator.mediaDevices.getUserMedia = (c) => (modoImagen && streamImagen) ? Promise.resolve(streamImagen) : gumOriginal(c);
+
+    document.querySelector('#btnIniciar').addEventListener('click', () => {
+      document.querySelector('#inicio').style.display = 'none'; btnSubir.style.display = 'block'; iniciarAR();
     });
-    folleto.addEventListener('targetLost', () => {
-      seguidor().detener();
-      timerPerdido = setTimeout(() => {
-        if (congelado) return;
-        mostrando = false; contenido.object3D.visible = false; btnCongelar.style.display = btnRecorrido.style.display = btnRuta.style.display = 'none';
-        cerrarFicha(); quitarRuta(); panelRutas.classList.remove('visible'); reiniciar();
-      }, 1200);
+
+    // Ajuste para el croquis oficial: la maqueta está hecha en medidas del folleto; aquí se pasa a medidas del croquis (901 x 637 px)
+    const CW = 901, CH = 637, aC = G.W / (G.S * CW);
+    const AJUSTE_CROQUIS = new THREE.Matrix4().makeScale(aC, aC, aC)
+      .setPosition((0.5 * G.W - G.OX) / (G.S * CW) - 0.5, (CH / 2 - (G.H / 2 - G.OY) / G.S) / CW, 0);
+    const AJUSTES = { folleto: null, croquisAR: AJUSTE_CROQUIS };
+
+    document.querySelectorAll('.objetivo').forEach(obj => {
+      obj.addEventListener('targetFound', () => {
+        clearTimeout(timerPerdido); clearTimeout(timerNoEncontrado); avisoImg.classList.remove('visible');
+        if (mostrando) { seguidor().seguir(false, obj, AJUSTES[obj.id]); return; }
+        mostrando = true; seguidor().seguir(true, obj, AJUSTES[obj.id]); contenido.object3D.visible = true;
+        contenido.querySelectorAll('.anim').forEach(el => el.emit('aparecer', null, false));
+        btnRecorrido.style.display = btnRuta.style.display = 'block';
+        btnCongelar.style.display = modoImagen ? 'none' : 'block';
+        aviso.textContent = obj.id === 'croquisAR' ? '✅ Croquis detectado' : '✅ Mapa detectado';
+        aviso.classList.add('visible'); clearTimeout(timerAviso); timerAviso = setTimeout(() => aviso.classList.remove('visible'), 1800);
+        if (navigator.vibrate) navigator.vibrate(60);
+      });
+      obj.addEventListener('targetLost', () => {
+        seguidor().detener();
+        timerPerdido = setTimeout(() => { if (!congelado) ocultarTodo(); }, 1200);
+      });
+    });
+
+    function streamDesdeImagen(img) {
+      // lienzo con la forma de la pantalla y la imagen centrada (así se ve completa)
+      const asp = innerWidth / innerHeight, k = Math.min(1, 1280 / Math.max(img.width, img.height));
+      const w = Math.round(img.width * k), h = Math.round(img.height * k);
+      let cw = w, ch = Math.round(w / asp); if (ch < h) { ch = h; cw = Math.round(h * asp); }
+      const c = document.createElement('canvas'); c.width = cw + (cw % 2); c.height = ch + (ch % 2);
+      const ctx = c.getContext('2d');
+      const pintar = () => { ctx.fillStyle = '#8d785f'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, (c.width - w) / 2, (c.height - h) / 2, w, h); };
+      pintar(); clearInterval(intervaloImagen); intervaloImagen = setInterval(pintar, 100);
+      return c.captureStream(15);
+    }
+    // Cambiar de modo = recargar la página en ese modo (MindAR arranca limpio)
+    function irAModo(modo) {
+      const u = new URL(location.href); u.searchParams.set('modo', modo); u.searchParams.set('t', Date.now()); location.href = u.toString();
+    }
+    function usarArchivo(f) {
+      const img = new Image();
+      img.onload = () => {     // se achica y se guarda para la recarga
+        const k = Math.min(1, 1280 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        try { sessionStorage.setItem('imagenSubida', c.toDataURL('image/jpeg', 0.85)); irAModo('imagen'); }
+        catch (e) { avisoImg.textContent = 'La imagen es muy pesada, prueba con otra.'; avisoImg.classList.add('visible'); }
+        URL.revokeObjectURL(img.src);
+      };
+      img.src = URL.createObjectURL(f);
+    }
+    function arrancarConImagen(src) {
+      const img = new Image();
+      img.onload = () => {
+        streamImagen = streamDesdeImagen(img); modoImagen = true;
+        document.querySelector('#inicio').style.display = 'none';
+        btnSubir.textContent = '📷 Usar cámara'; btnSubir.style.display = 'block';
+        iniciarAR();
+        timerNoEncontrado = setTimeout(() => { if (!mostrando) {
+          avisoImg.innerHTML = '😕 No reconocí el croquis en esa imagen.<br>Prueba con una foto más clara y completa, o usa el croquis oficial.';
+          avisoImg.classList.add('visible'); setTimeout(() => avisoImg.classList.remove('visible'), 7000); } }, 9000);
+      };
+      img.onerror = () => irAModo('inicio');
+      img.src = src;
+    }
+    // ¿En qué modo se abrió la página?
+    (() => {
+      const modo = new URLSearchParams(location.search).get('modo');
+      if (modo === 'croquis') arrancarConImagen('./croquis.jpg');
+      else if (modo === 'imagen') { let d = null; try { d = sessionStorage.getItem('imagenSubida'); } catch (e) {} d ? arrancarConImagen(d) : null; }
+      else if (modo === 'camara') { document.querySelector('#inicio').style.display = 'none'; btnSubir.style.display = 'block'; iniciarAR(); }
+    })();
+    btnSubir.addEventListener('click', () => { if (modoImagen) irAModo('camara'); else panelSubir.classList.add('visible'); });
+    document.querySelector('#subirCancelar').addEventListener('click', () => panelSubir.classList.remove('visible'));
+    document.querySelector('#subirOficial').addEventListener('click', () => irAModo('croquis'));
+    document.querySelector('#subirArchivo').addEventListener('change', e => {
+      const f = e.target.files[0]; if (!f) return;
+      panelSubir.classList.remove('visible'); usarArchivo(f); e.target.value = '';
     });
   </script>
 </body>
