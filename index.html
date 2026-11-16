@@ -35,8 +35,32 @@
     #btnCongelar { right: 12px; top: 70px; }
     #btnRecorrido { left: 12px; top: 70px; }
     #btnRuta { left: 12px; top: 122px; }
+    #btnCroquis { right: 12px; top: 122px; display: block; }
+    /* Apartado del croquis */
+    #croquis { position: fixed; inset: 0; z-index: 55; background: #0f2c17; display: none; flex-direction: column; }
+    #croquis.visible { display: flex; }
+    #croquisCab { color: #fff; padding: 14px 16px 8px; font-weight: 800; font-size: 18px; }
+    #croquisCab small { display: block; font-weight: 500; font-size: 12.5px; opacity: .75; margin-top: 2px; }
+    #croquisZona { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 8px; -webkit-overflow-scrolling: touch; }
+    #croquisZona.ampliado { display: block; }
+    #croquisImg { max-width: 100%; max-height: 100%; border-radius: 10px; background: #fff; }
+    #croquisZona.ampliado #croquisImg { max-width: none; max-height: none; width: 260%; }
+    #croquisBotones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 12px 14px; }
+    #croquisBotones button, #croquisBotones label { border: 0; border-radius: 12px; padding: 12px 8px; font-weight: 700; font-size: 14.5px; text-align: center; background: #fff; color: #14401f; }
+    #croquisBotones .principal { background: #f4b400; }
+    #croquisArchivo { display: none; }
     #fichaFoto { width: 100%; max-height: 22vh; object-fit: cover; display: none; border-radius: 12px; margin: 6px 0 8px; }
     #btnComoLlegar { background: #f4b400; color: #14401f; }
+    /* Visor de fotos en grande */
+    #visor { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.88); display: none; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
+    #visor.visible { display: flex; animation: aparecerVisor .25s ease; }
+    #visor img { max-width: 100%; max-height: 72vh; border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+    #visorTitulo { color: #fff; font-weight: 800; font-size: 19px; margin-top: 14px; text-align: center; }
+    #visorCredito { color: #bbb; font-size: 12px; margin-top: 4px; }
+    #visorCerrar { margin-top: 16px; padding: 11px 26px; border: 0; border-radius: 999px; background: #f4b400; color: #14401f; font-weight: 800; font-size: 15px; }
+    @keyframes aparecerVisor { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
+    #rutaPasos img.mini, #fichaFoto { cursor: zoom-in; }
+    #rutaPasos img.mini { outline: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
     #fichaCredito { font-size: 11px; color: #888; margin: -4px 0 6px; display: none; }
     /* Selector de destino */
     #rutas { position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 31; background: #fff; border-radius: 20px; padding: 14px 14px 12px;
@@ -219,12 +243,26 @@
     <h1>Recorrido de bienvenida UNSM</h1>
     <p>Toca <b>Comenzar</b>, permite la cámara y apunta al <b>mapa del folleto</b>. Los edificios saldrán en 3D: tócalos para saber qué hay en cada uno.</p>
     <button id="btnIniciar">Comenzar</button>
+    <button id="btnCroquisInicio" style="background:transparent;color:#fff;border:2px solid #fff;border-radius:999px;padding:10px 22px;font-weight:700;font-size:15px">🗺️ Ver croquis</button>
   </div>
 
   <div id="aviso" class="aviso">✅ Mapa detectado</div>
   <button id="btnRecorrido" class="flotante">🧭 Recorrido</button>
   <button id="btnRuta" class="flotante">📍 ¿Cómo llego?</button>
   <button id="btnCongelar" class="flotante">❄️ Congelar</button>
+  <button id="btnCroquis" class="flotante" style="display:none">🗺️ Croquis</button>
+
+  <div id="croquis">
+    <div id="croquisCab">🗺️ Croquis de la Ciudad Universitaria<small id="croquisNota">Croquis oficial UNSM</small></div>
+    <div id="croquisZona"><img id="croquisImg" src="./croquis.jpg" alt="Croquis"></div>
+    <div id="croquisBotones">
+      <button id="croquisAmpliar">🔍 Ampliar</button>
+      <label class="principal" for="croquisArchivo">📤 Subir imagen</label>
+      <input type="file" id="croquisArchivo" accept="image/*">
+      <button id="croquisOficial">↩️ Croquis oficial</button>
+      <button id="croquisCerrar">Cerrar</button>
+    </div>
+  </div>
 
   <div id="ficha">
     <div id="fichaFranja"></div>
@@ -261,6 +299,13 @@
       <button id="btnQuitarRuta" style="background:#fff;color:#14401f">✕</button>
     </div>
     <ol id="rutaPasos"></ol>
+  </div>
+
+  <div id="visor">
+    <img id="visorImg" alt="">
+    <div id="visorTitulo"></div>
+    <div id="visorCredito"></div>
+    <button id="visorCerrar">Cerrar</button>
   </div>
 
   <a-scene
@@ -506,7 +551,7 @@
                      { id: destino, u: 1, et: '🏁 ¡LLEGASTE A TU DESTINO!', clase: 'final' }];
       document.querySelector('#rutaPasos').innerHTML = filas.map((f, i) => `
         <li class="${f.clase}" data-i="${i}">
-          <img class="mini" src="foto-${f.id.toLowerCase()}.jpg" alt="" onerror="this.outerHTML='<div class=&quot;mini&quot;>${icono(f.id)}</div>'">
+          <img class="mini" data-id="${f.id}" src="foto-${f.id.toLowerCase()}.jpg" alt="" onerror="this.outerHTML='<div class=&quot;mini&quot;>${icono(f.id)}</div>'">
           <div class="txt"><small>${i === 0 ? f.et : (f.clase ? f.et : `${f.et} · paso ${i}`)}</small>${nombreLargo(f.id)}</div>
         </li>`).join('');
       let pasoActivo = -1;
@@ -541,6 +586,56 @@
       rutaInfo.classList.add('visible');
     }
 
+    /* ---------- Ver foto en grande ---------- */
+    const visor = document.querySelector('#visor');
+    function verFoto(id, src) {
+      const L = LUGARES.find(l => l.id === id), I = INFO[id];
+      document.querySelector('#visorImg').src = src;
+      document.querySelector('#visorTitulo').textContent = L.tipo === 'bloque' ? `${I.titulo} — ${I.sub}` : I.titulo;
+      document.querySelector('#visorCredito').textContent = I.credito || '';
+      visor.classList.add('visible');
+    }
+    visor.addEventListener('click', () => visor.classList.remove('visible'));
+    document.querySelector('#rutaPasos').addEventListener('click', e => {
+      const img = e.target.closest('img.mini'); if (img) verFoto(img.dataset.id, img.src);
+    });
+    document.querySelector('#fichaFoto').addEventListener('click', e => { if (fichaId) verFoto(fichaId, e.target.src); });
+
+    /* ---------- Apartado del croquis (con opción de subir otra imagen) ---------- */
+    const croquis = document.querySelector('#croquis'), croquisImg = document.querySelector('#croquisImg'), croquisZona = document.querySelector('#croquisZona');
+    const CLAVE = 'croquisSubido';
+    function mostrarCroquisGuardado() {
+      let guardado = null; try { guardado = localStorage.getItem(CLAVE); } catch (e) {}
+      croquisImg.src = guardado || './croquis.jpg';
+      document.querySelector('#croquisNota').textContent = guardado ? 'Imagen subida desde este celular' : 'Croquis oficial UNSM';
+      document.querySelector('#croquisOficial').style.visibility = guardado ? 'visible' : 'hidden';
+    }
+    function abrirCroquis() { mostrarCroquisGuardado(); croquisZona.classList.remove('ampliado'); document.querySelector('#croquisAmpliar').textContent = '🔍 Ampliar'; croquis.classList.add('visible'); }
+    document.querySelector('#btnCroquis').addEventListener('click', abrirCroquis);
+    document.querySelector('#btnCroquisInicio').addEventListener('click', abrirCroquis);
+    document.querySelector('#croquisCerrar').addEventListener('click', () => croquis.classList.remove('visible'));
+    document.querySelector('#croquisAmpliar').addEventListener('click', e => {
+      const amp = croquisZona.classList.toggle('ampliado'); e.target.textContent = amp ? '🔎 Ver completo' : '🔍 Ampliar';
+    });
+    document.querySelector('#croquisOficial').addEventListener('click', () => { try { localStorage.removeItem(CLAVE); } catch (e) {} mostrarCroquisGuardado(); });
+    document.querySelector('#croquisArchivo').addEventListener('change', e => {
+      const archivo = e.target.files[0]; if (!archivo) return;
+      const img = new Image();
+      img.onload = () => {   // se achica para que entre en la memoria del celular
+        const max = 1600, k = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        const datos = c.toDataURL('image/jpeg', 0.82);
+        try { localStorage.setItem(CLAVE, datos); } catch (err) {}
+        croquisImg.src = datos;
+        document.querySelector('#croquisNota').textContent = 'Imagen subida desde este celular';
+        document.querySelector('#croquisOficial').style.visibility = 'visible';
+        URL.revokeObjectURL(img.src);
+      };
+      img.src = URL.createObjectURL(archivo);
+      e.target.value = '';
+    });
+
     let ultimoToque = 0;
     escena.addEventListener('loaded', () => {
       document.querySelectorAll('.tocable').forEach(el => el.addEventListener('click', () => {
@@ -553,6 +648,7 @@
     const sistemaAR = () => escena.systems['mindar-image-system'];
     document.querySelector('#btnIniciar').addEventListener('click', () => {
       document.querySelector('#inicio').style.display = 'none';
+      document.querySelector('#btnCroquis').style.display = 'block';
       escena.hasLoaded ? sistemaAR().start() : escena.addEventListener('loaded', () => sistemaAR().start());
     });
     function congelar(si) {
@@ -570,6 +666,7 @@
       mostrando = true; seguidor().seguir(true); contenido.object3D.visible = true;
       contenido.querySelectorAll('.anim').forEach(el => el.emit('aparecer', null, false));
       btnCongelar.style.display = btnRecorrido.style.display = btnRuta.style.display = 'block';
+      document.querySelector('#btnCroquis').style.display = 'block';
       aviso.classList.add('visible'); clearTimeout(timerAviso); timerAviso = setTimeout(() => aviso.classList.remove('visible'), 1800);
       if (navigator.vibrate) navigator.vibrate(60);
     });

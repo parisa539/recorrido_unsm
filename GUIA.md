@@ -15,6 +15,7 @@ Los ingresantes no conocen el campus: no saben dónde está su facultad, el come
 - **📍 ¿Cómo llego?**: eliges tu facultad o un lugar y, desde la Puerta 1 o la Puerta 2, aparece una **ruta azul** por las pistas del campus con un **personaje caminando** hasta el destino. También se puede pedir desde la ficha de cada lugar (botón "Cómo llegar"). Debajo aparece la ruta **paso a paso**: *Sales desde…*, *Pasas por…* y *¡Llegaste a tu destino!*, con la foto de cada lugar, y se marca el paso donde va el personaje.
 - **📷 Fotos reales** en la ficha de cada lugar (si se suben al repositorio).
 - Un botón **❄️ Congelar** para tocar todo tranquilo sin mover el celular.
+- Un apartado **🗺️ Croquis** (también en la pantalla de inicio) con el croquis oficial de la Ciudad Universitaria: se puede **ampliar** y también **subir otra imagen** desde el celular (se guarda en ese celular; con *Croquis oficial* se vuelve al original).
 
 ## 4. Herramientas (todas gratuitas, en lugar de Adobe Aero, que fue descontinuado)
 | Para qué | Herramienta |
@@ -55,7 +56,7 @@ Sube al repositorio una foto por lugar con **este nombre exacto** (en minúscula
 
 Usa fotos tomadas por ti, en horizontal y livianas (menos de 300 KB cada una) para que carguen rápido con datos móviles.
 
-**Fotos incluidas ahora:** Puerta 1, Puerta 2, FEH (D), FMH (B), FDCP (I), Comedor, Centro Médico, Monumento y FCE (H).
+**Fotos incluidas ahora:** Puerta 1, Puerta 2, FISI (A), FEH (D), FMH (B), FDCP (I), Comedor, Centro Médico, Monumento y FCE (H). Al tocar cualquier foto (en la ficha o en los pasos de la ruta) se abre en grande.
 Las fotos de FEH y FMH son de Manuel Rojas en Google Maps y llevan su crédito en la ficha (campo `credito` en `index.html`). Lo ideal es reemplazarlas por fotos propias cuando se pueda.
 
 ## 8. Cómo publicarlo
