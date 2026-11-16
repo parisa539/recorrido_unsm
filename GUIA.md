@@ -12,7 +12,7 @@ Los ingresantes no conocen el campus: no saben dónde está su facultad, el come
 - Pines de servicios: Comedor, Cafetín 1, Cafetería saludable, Piscina, Campo deportivo, Losas deportivas, Centro Médico, Auditorio de Videoconferencias, Monumento Carlos Vidaurre, Puerta 1 y Puerta 2.
 - Una ficha con información al tocar cada lugar.
 - Un **recorrido guiado** de 20 pasos, desde la Puerta 1 hasta la Puerta 2.
-- **📍 ¿Cómo llego?**: eliges tu facultad o un lugar y, desde la Puerta 1 o la Puerta 2, aparece una **ruta azul** por las pistas del campus con un **personaje caminando** hasta el destino. También se puede pedir desde la ficha de cada lugar (botón "Cómo llegar"). Debajo aparece la ruta **paso a paso**: *Sales desde…*, *Pasas por…* y *¡Llegaste a tu destino!*, con la foto de cada lugar, y se marca el paso donde va el personaje.
+- **📍 ¿Cómo llego?**: eliges tu facultad o un lugar y, desde la Puerta 1 o la Puerta 2, aparece una **ruta azul** por las pistas del campus con un **personaje caminando** hasta el destino. También se puede pedir desde la ficha de cada lugar (botón "Cómo llegar"). Debajo aparece la ruta **paso a paso**: *Sales desde…*, *Pasas por…* y *¡Llegaste a tu destino!*, con la foto de cada lugar, y se marca el paso donde va el personaje. Con el botón **▼** se oculta la lista (la ruta azul sigue en el mapa) y con **▲** vuelve a aparecer.
 - **📷 Fotos reales** en la ficha de cada lugar (si se suben al repositorio).
 - Un botón **❄️ Congelar** para tocar todo tranquilo sin mover el celular.
 - **Funciona con el folleto y también con el croquis oficial**, en papel o en una pantalla.
